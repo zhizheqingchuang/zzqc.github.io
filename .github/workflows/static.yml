@@ -1,0 +1,84 @@
+# 部署静态内容到GitHub Pages的简单工作流程
+
+在现代的 web 开发中，使用静态内容（如 HTML、CSS 和 JavaScript 文件）并通过内容分发网络（CDN）分发是一种越来越受欢迎的方式。这种静态站点托管在像 GitHub Pages 这样的服务上，可以非常快速且成本效益高。此外，使用版本控制系统（如 Git）来管理静态内容也使得站点的维护和更新变得简单。
+
+在这篇文章中，我们将介绍如何使用 GitHub Actions 来自动化部署静态内容到 GitHub Pages。我们将创建一个简单的 CI/CD 流程，该流程将在每次代码提交到特定的分支（例如 `main` 或 `master`）时自动构建和部署你的静态站点。
+
+首先，确保你已经创建了一个 GitHub 仓库来托管你的静态内容。这个仓库应该包含你的静态 HTML、CSS、JavaScript 文件，以及其他必要的资源文件。仓库中还应该有一个 `_config.yml` 文件，用于配置 Jekyll（一个用于生成静态站点的工具）。
+
+接下来，我们需要在仓库中创建一个名为 `.github/workflows` 的目录，并在其中创建一个名为 `gh-deploy.yml` 的文件。这个文件将包含我们的 GitHub Actions 工作流配置。
+
+```yml
+# .github/workflows/gh-deploy.yml
+名称：部署到GitHub Pages
+
+on:
+  push:
+    branches:
+      - 主页
+
+工作:
+  构建和部署:
+    运行于: ubuntu-latest
+
+    步骤:
+    - 名称: 结账代码
+      使用：actions/checkout@v3
+
+    - 名称: 设置 Jekyll
+      使用： actions/setup-jekyll@v1
+      与:
+        jekyll-version：4.2.1
+
+    - 名称: 构建 Jekyll 网站
+      运行：jekyll build -- drafts
+
+    - 名称: 部署到GitHub Pages
+      使用： JamesIves/gh-deploy-action@v4
+      与:
+        令牌： ${{ secrets.GITHUB_TOKEN }}
+        目标枝: 主
+        基础分支: gh-pages
+        目的地：https：//
+名称：将静态内容部署到Pages
+
+在：
+  # 在针对默认分支的推送触发
+  推送:推送：
+    分支：["main"]
+
+  # 允许您从 Actions 标签手动运行此工作流程
+  工作流派送：
+
+# 设置 GITHUB_TOKEN 的权限以允许部署到 GitHub Pages
+权限：
+  目录：阅读
+  页数：写
+  id令牌：写入
+
+# 仅允许一个并发部署，跳过在进行中的运行和最新队列之间的队列运行。
+# 但是，请不要取消正在进行的运行，因为我们希望允许这些生产部署完成。
+并发性：
+  组： "页面"
+  取消正在进行中: 否
+
+工作：
+  # 单独部署作业，因为我们只是进行部署
+  部署:
+    环境：
+      名称：github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    运行于：ubuntu-latest
+    步骤：
+      输入：名称：结账
+        用途：actions/checkout@v4
+      输入：名称：设置页面
+        使用： actions/configure-pages@v5
+      输入：名称：上传工件
+        用途：actions/upload-pages-artifact@v3
+        与：
+          # 上传整个仓库
+          路径：''.''
+      - 名字: 部署到GitHub Pages
+        id： 部署
+        用途：actions/deploy-pages@v4
